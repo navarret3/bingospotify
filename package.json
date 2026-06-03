@@ -14,7 +14,7 @@
     "build:shared": "npm run build -w @musical-bingo/shared",
     "build:api": "npm run build -w @musical-bingo/api",
     "build:web": "npm run build:shared && npm run export:web -w @musical-bingo/mobile",
-    "start:api": "npm run build:shared && npm run start -w @musical-bingo/api",
+    "start:api": "node apps/api/dist/server.js",
     "typecheck": "npm run build:shared && npm run typecheck -ws --if-present"
   },
   "devDependencies": {

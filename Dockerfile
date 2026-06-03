@@ -24,4 +24,4 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
 EXPOSE 4000
-CMD ["npm", "run", "start:api"]
+CMD ["node", "apps/api/dist/server.js"]
