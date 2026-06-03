@@ -1,0 +1,12 @@
+node_modules
+.git
+.github
+.expo
+.expo-shared
+coverage
+build
+dist
+apps/mobile/dist
+.env
+.env.*
+*.log
