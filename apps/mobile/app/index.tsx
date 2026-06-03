@@ -156,7 +156,8 @@ function LobbyScreen() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string>();
-  const inviteUrl = `http://localhost:8081/join/${snapshot.room.code}`;
+  const inviteOrigin = globalThis.location?.origin ?? "http://localhost:8081";
+  const inviteUrl = `${inviteOrigin}/join/${snapshot.room.code}`;
   const canStart = role === "host" && snapshot.players.length >= 2;
 
   const handleStart = async () => {
