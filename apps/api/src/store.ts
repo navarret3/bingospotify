@@ -88,6 +88,36 @@ export async function createRoom(
   };
 }
 
+export function leaveRoom(
+  roomId: string,
+  token: string
+): { roomId: string; deleted: boolean; playerId: string; name: string } {
+  const record = getRecord(roomId);
+  const auth = tokenIndex.get(token);
+  const player = auth ? record.players.find((item) => item.id === auth.playerId) : undefined;
+  if (!auth || !player) {
+    throw new AppError("UNAUTHORIZED", "Token inválido", 401);
+  }
+
+  record.players = record.players.filter((item) => item.id !== player.id);
+  tokenIndex.delete(token);
+
+  if (!record.players.length) {
+    rooms.delete(roomId);
+    persistState();
+    return { roomId, deleted: true, playerId: player.id, name: player.name };
+  }
+
+  if (record.room.hostId === player.id) {
+    const nextHost = record.players[0];
+    nextHost.isHost = true;
+    record.room.hostId = nextHost.id;
+  }
+
+  persistState();
+  return { roomId, deleted: false, playerId: player.id, name: player.name };
+}
+
 export function findSnapshotByCode(code: string, token?: string): RoomSnapshot {
   const normalized = normalizeRoomCode(code);
   const record = [...rooms.values()].find((item) => item.room.code === normalized);

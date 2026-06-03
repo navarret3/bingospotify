@@ -8,7 +8,7 @@ import { BingoConfirmModal } from "@/components/BingoConfirmModal";
 import { PlayerList } from "@/components/PlayerList";
 import { AppBar, Badge, Button, colors, Field, Panel, Screen } from "@/components/ui";
 import { useRoomSocket } from "@/hooks/useRoomSocket";
-import { ApiError, createRoom, resetRoom, startRoom } from "@/lib/api";
+import { ApiError, createRoom, leaveRoom, resetRoom, startRoom } from "@/lib/api";
 
 import { useSessionStore } from "@/store/sessionStore";
 import { CARD_CELL_COUNT } from "@musical-bingo/shared";
@@ -220,7 +220,11 @@ function GameScreen() {
   const snapshot = useSessionStore((state) => state.snapshot)!;
   const { send } = useRoomSocket();
   const [showBingo, setShowBingo] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState<string>();
   const card = snapshot.currentPlayer?.card;
+  const token = useSessionStore((state) => state.token)!;
+  const clear = useSessionStore((state) => state.clear);
 
   useEffect(() => {
     if (card?.markedCount === CARD_CELL_COUNT) {
@@ -247,6 +251,34 @@ function GameScreen() {
         style={{ flex: 1 }}
         onToggle={(row, col, marked) => send({ type: marked ? "mark_cell" : "unmark_cell", row, col })}
       />
+      <Panel>
+        <View style={styles.panelTitleRow}>
+          <View style={styles.inlineTitle}>
+            <Users color={colors.ink} size={20} />
+            <Text style={styles.panelTitle}>Jugadores</Text>
+          </View>
+          <Badge label={`${snapshot.players.length} jugadores`} />
+        </View>
+        <PlayerList players={snapshot.players} />
+        {leaveError ? <Text style={styles.errorText}>{leaveError}</Text> : null}
+        <Button
+          label="Salir de la sala"
+          variant="danger"
+          loading={leaving}
+          onPress={async () => {
+            try {
+              setLeaveError(undefined);
+              setLeaving(true);
+              await leaveRoom(snapshot.room.id, token);
+              clear();
+            } catch (err) {
+              setLeaveError(err instanceof ApiError ? err.message : "No se pudo salir de la sala");
+            } finally {
+              setLeaving(false);
+            }
+          }}
+        />
+      </Panel>
       <BingoConfirmModal
         visible={showBingo}
         onConfirm={() => {

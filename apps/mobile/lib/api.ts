@@ -55,6 +55,13 @@ export function resetRoom(roomId: string, token: string) {
   });
 }
 
+export function leaveRoom(roomId: string, token: string) {
+  return request<{ ok: true }>(`/api/rooms/${roomId}/leave`, {
+    method: "POST",
+    token
+  });
+}
+
 async function request<T>(path: string, options: RequestInit & { token?: string } = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,

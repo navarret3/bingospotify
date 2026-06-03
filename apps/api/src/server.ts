@@ -13,6 +13,7 @@ import {
   findSnapshotByCode,
   findSnapshotByRoomId,
   joinRoom,
+  leaveRoom,
   resetRoom,
   resolveToken,
   setConnected,
@@ -104,6 +105,19 @@ app.post("/api/rooms/:roomId/reset", async (request) => {
     timestamp: new Date().toISOString()
   });
   return snapshot;
+});
+
+app.post("/api/rooms/:roomId/leave", async (request) => {
+  const params = z.object({ roomId: z.string() }).parse(request.params);
+  const token = requireBearerToken(request.headers.authorization);
+  const result = leaveRoom(params.roomId, token);
+  broadcast(result.roomId, {
+    type: "player_left",
+    roomId: result.roomId,
+    payload: { playerId: result.playerId, name: result.name },
+    timestamp: new Date().toISOString()
+  });
+  return { ok: true };
 });
 
 app.get("/ws", { websocket: true }, (socket: any, request) => {

@@ -41,6 +41,7 @@ export function useRoomSocket() {
       }
       if (
         message.type === "player_joined" ||
+        message.type === "player_left" ||
         message.type === "game_started" ||
         message.type === "game_finished" ||
         message.type === "bingo_confirmed" ||

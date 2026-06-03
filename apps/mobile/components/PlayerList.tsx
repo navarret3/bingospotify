@@ -14,7 +14,9 @@ export function PlayerList({ players }: { players: Player[] }) {
             <Text style={styles.name}>{player.name}</Text>
             <Text style={styles.role}>{player.isHost ? "Anfitrión" : "Jugador"}</Text>
           </View>
-          <Badge label={player.connected ? "Conectado" : "Reconectando"} tone={player.connected ? "green" : "orange"} />
+          <View style={styles.rightSide}>
+            <Badge label={`${player.card?.markedCount ?? 0} checks`} tone="neutral" />
+          </View>
         </View>
       ))}
     </View>
@@ -58,5 +60,8 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 12,
     fontWeight: "600"
+  },
+  rightSide: {
+    alignItems: "flex-end"
   }
 });
