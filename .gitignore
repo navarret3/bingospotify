@@ -1,6 +1,7 @@
 node_modules
 .expo
 .expo-shared
+.data
 dist
 build
 .env

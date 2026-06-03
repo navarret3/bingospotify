@@ -1,5 +1,6 @@
 import type { BingoCard, Player, RoomSnapshot } from "@musical-bingo/shared";
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 type Role = "host" | "guest";
 
@@ -13,24 +14,32 @@ interface SessionState {
   clear: () => void;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
-  setSession: ({ token, role, snapshot }) => set({ token, role, snapshot }),
-  setSnapshot: (snapshot) => set({ snapshot }),
-  updateCurrentCard: (card) =>
-    set((state) => {
-      if (!state.snapshot?.currentPlayer) {
-        return state;
-      }
-      const currentPlayer: Player = { ...state.snapshot.currentPlayer, card };
-      return {
-        snapshot: {
-          ...state.snapshot,
-          currentPlayer,
-          players: state.snapshot.players.map((player) =>
-            player.id === currentPlayer.id ? currentPlayer : player
-          )
-        }
-      };
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set) => ({
+      setSession: ({ token, role, snapshot }) => set({ token, role, snapshot }),
+      setSnapshot: (snapshot) => set({ snapshot }),
+      updateCurrentCard: (card) =>
+        set((state) => {
+          if (!state.snapshot?.currentPlayer) {
+            return state;
+          }
+          const currentPlayer: Player = { ...state.snapshot.currentPlayer, card };
+          return {
+            snapshot: {
+              ...state.snapshot,
+              currentPlayer,
+              players: state.snapshot.players.map((player) =>
+                player.id === currentPlayer.id ? currentPlayer : player
+              )
+            }
+          };
+        }),
+      clear: () => set({ token: undefined, role: undefined, snapshot: undefined })
     }),
-  clear: () => set({ token: undefined, role: undefined, snapshot: undefined })
-}));
+    {
+      name: "musical-bingo.session",
+      storage: createJSONStorage(() => localStorage)
+    }
+  )
+);

@@ -25,7 +25,6 @@
 ### Backend en Railway
 
 - `HOST=0.0.0.0`
-- `PORT=4000`
 - `APP_BASE_URL=https://app.tudominio.com`
 - `CORS_ORIGIN=https://app.tudominio.com`
 - `SPOTIFY_CLIENT_ID=...`
@@ -55,7 +54,9 @@
 
 ## Limitación actual importante
 
-El estado de las salas sigue en memoria en el backend. Si Railway reinicia el contenedor, las salas activas se perderán. Para una producción más robusta, el siguiente paso es persistir salas, jugadores y tokens en base de datos o Redis.
+El backend ya persiste salas, jugadores, tokens y cartones marcados en un archivo JSON dentro de `.data/store.json`, y el cliente web persiste token/snapshot en `localStorage`.
+
+Para que esa persistencia sobreviva a redeploys en Railway, conviene adjuntar un volumen al servicio y dejar que Railway exponga `RAILWAY_VOLUME_MOUNT_PATH`. Si no hay volumen, la persistencia sirve para reinicios y reentradas mientras siga vivo el contenedor actual, pero no está garantizada entre redeploys.
 
 ## Railway: error de build típico
 

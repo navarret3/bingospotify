@@ -12,6 +12,8 @@ import {
   toPublicRoom,
   unmarkLastCell
 } from "@musical-bingo/shared";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { customAlphabet, nanoid } from "nanoid";
 import { getAppBaseUrl } from "./env.js";
 import { AppError } from "./errors.js";
@@ -24,8 +26,20 @@ interface RoomRecord {
   players: Player[];
 }
 
+interface PersistedStoreState {
+  rooms: RoomRecord[];
+  tokenIndex: Array<[string, { roomId: string; playerId: string }]>;
+}
+
 const rooms = new Map<string, RoomRecord>();
 const tokenIndex = new Map<string, { roomId: string; playerId: string }>();
+const persistenceFilePath = resolve(
+  process.env.RAILWAY_VOLUME_MOUNT_PATH ?? process.cwd(),
+  ".data",
+  "store.json"
+);
+
+loadPersistedState();
 
 export async function createRoom(
   playlistUrl: string,
@@ -63,6 +77,7 @@ export async function createRoom(
 
   rooms.set(roomId, { room, players: [host] });
   const hostToken = issueToken(roomId, hostId);
+  persistState();
 
   return {
     room: toPublicRoom(room),
@@ -115,6 +130,7 @@ export function joinRoom(code: string, name: string): RoomSnapshot & { guestToke
 
   record.players.push(player);
   const guestToken = issueToken(record.room.id, player.id);
+  persistState();
 
   return {
     ...makeSnapshot(record, guestToken),
@@ -140,6 +156,7 @@ export function startRoom(roomId: string, token: string): RoomSnapshot {
   record.room.startedAt = new Date().toISOString();
   record.room.finishedAt = undefined;
   record.room.winnerId = undefined;
+  persistState();
 
   return makeSnapshot(record, token);
 }
@@ -156,6 +173,7 @@ export function resetRoom(roomId: string, token: string): RoomSnapshot {
   record.room.finishedAt = undefined;
   record.room.winnerId = undefined;
   record.players = record.players.map((player) => ({ ...player, card: undefined }));
+  persistState();
 
   return makeSnapshot(record, token);
 }
@@ -168,6 +186,7 @@ export function updateCell(roomId: string, token: string, row: number, col: numb
   }
 
   player.card = markCell(player.card, row, col, marked);
+  persistState();
   return player.card;
 }
 
@@ -179,6 +198,7 @@ export function denyBingo(roomId: string, token: string): BingoCard {
   }
 
   player.card = unmarkLastCell(player.card);
+  persistState();
   return player.card;
 }
 
@@ -192,6 +212,7 @@ export function confirmBingo(roomId: string, token: string): { winner: Player; s
   record.room.status = "finished";
   record.room.winnerId = player.id;
   record.room.finishedAt = new Date().toISOString();
+  persistState();
 
   return {
     winner: player,
@@ -252,4 +273,40 @@ function issueToken(roomId: string, playerId: string): string {
   const token = nanoid(32);
   tokenIndex.set(token, { roomId, playerId });
   return token;
+}
+
+function loadPersistedState() {
+  if (!existsSync(persistenceFilePath)) {
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(readFileSync(persistenceFilePath, "utf8")) as PersistedStoreState;
+    for (const record of parsed.rooms ?? []) {
+      rooms.set(record.room.id, {
+        room: record.room,
+        players: record.players.map((player) => ({ ...player, connected: false }))
+      });
+    }
+    for (const [token, value] of parsed.tokenIndex ?? []) {
+      tokenIndex.set(token, value);
+    }
+  } catch (error) {
+    console.error("[store] no se pudo cargar el estado persistido", error);
+  }
+}
+
+function persistState() {
+  try {
+    mkdirSync(dirname(persistenceFilePath), { recursive: true });
+    const tempFilePath = `${persistenceFilePath}.tmp`;
+    const payload: PersistedStoreState = {
+      rooms: [...rooms.values()],
+      tokenIndex: [...tokenIndex.entries()]
+    };
+    writeFileSync(tempFilePath, JSON.stringify(payload), "utf8");
+    renameSync(tempFilePath, persistenceFilePath);
+  } catch (error) {
+    console.error("[store] no se pudo persistir el estado", error);
+  }
 }
