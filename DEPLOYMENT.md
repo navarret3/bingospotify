@@ -56,3 +56,30 @@
 ## Limitación actual importante
 
 El estado de las salas sigue en memoria en el backend. Si Railway reinicia el contenedor, las salas activas se perderán. Para una producción más robusta, el siguiente paso es persistir salas, jugadores y tokens en base de datos o Redis.
+
+## Railway: error de build típico
+
+Si Railway muestra un log parecido a este:
+
+```text
+Railpack could not determine how to build the app
+The app contents that Railpack analyzed contains:
+./
+└── README.md
+```
+
+significa que el servicio está apuntando al directorio equivocado o que Railway no está usando el `Dockerfile` del repo.
+
+### Qué revisar en Railway
+
+1. Abre el servicio.
+2. Ve a `Settings` o `Build & Deploy`.
+3. Comprueba que el `Root Directory` esté vacío o apunte a la raíz del repo.
+4. Asegúrate de que el builder sea `Dockerfile` y que el path sea `Dockerfile`.
+5. Si Railway sigue usando `Railpack`, crea el servicio otra vez desde GitHub y selecciona el builder por Dockerfile.
+
+### Qué no debería pasar
+
+- No debería analizar solo `README.md`.
+- No debería intentar usar `start.sh`.
+- No debería ignorar el `package.json` ni el `Dockerfile` que están en la raíz.

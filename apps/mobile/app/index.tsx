@@ -95,7 +95,9 @@ function CreateRoomScreen({ onBack }: { onBack: () => void }) {
       const response = await createRoom(playlistUrl.trim(), hostName.trim() || "Anfitrión");
       setSession({ token: response.hostToken, role: "host", snapshot: response });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo crear la sala");
+      setError(
+        err instanceof ApiError ? `[${err.code}] ${err.message}` : "No se pudo crear la sala"
+      );
     } finally {
       setLoading(false);
     }
