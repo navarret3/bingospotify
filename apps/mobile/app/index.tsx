@@ -9,7 +9,7 @@ import { BingoConfirmModal } from "@/components/BingoConfirmModal";
 import { PlayerList } from "@/components/PlayerList";
 import { AppBar, Badge, Button, colors, Field, Panel, Screen } from "@/components/ui";
 import { useRoomSocket } from "@/hooks/useRoomSocket";
-import { ApiError, createRoom, leaveRoom, resetRoom, startRoom } from "@/lib/api";
+import { ApiError, createRoom, getRoomById, leaveRoom, resetRoom, startRoom } from "@/lib/api";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 import { useSessionStore } from "@/store/sessionStore";
@@ -295,13 +295,62 @@ function LobbyScreen() {
 
 function GameScreen() {
   const snapshot = useSessionStore((state) => state.snapshot)!;
-  const { send } = useRoomSocket();
+  const { connected, send } = useRoomSocket();
   const [showBingo, setShowBingo] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState<string>();
+  const [syncingCard, setSyncingCard] = useState(false);
+  const [syncError, setSyncError] = useState<string>();
   const card = snapshot.currentPlayer?.card;
   const token = useSessionStore((state) => state.token)!;
+  const setSnapshot = useSessionStore((state) => state.setSnapshot);
   const clear = useSessionStore((state) => state.clear);
+
+  const handleLeaveRoom = async () => {
+    try {
+      setLeaveError(undefined);
+      setLeaving(true);
+      await leaveRoom(snapshot.room.id, token);
+      clear();
+    } catch (err) {
+      if (
+        err instanceof ApiError &&
+        (err.code === "ROOM_NOT_FOUND" || err.code === "UNAUTHORIZED")
+      ) {
+        clear();
+        return;
+      }
+
+      setLeaveError(err instanceof ApiError ? err.message : "No se pudo salir de la sala");
+    } finally {
+      setLeaving(false);
+    }
+  };
+
+  const refreshRoom = async () => {
+    try {
+      setSyncError(undefined);
+      setSyncingCard(true);
+      const nextSnapshot = await getRoomById(snapshot.room.id, token);
+      setSnapshot(nextSnapshot);
+
+      if (nextSnapshot.room.status === "playing" && !nextSnapshot.currentPlayer?.card) {
+        setSyncError("Aun no hemos recibido tu carton. Reintenta la sincronizacion.");
+      }
+    } catch (err) {
+      if (
+        err instanceof ApiError &&
+        (err.code === "ROOM_NOT_FOUND" || err.code === "UNAUTHORIZED")
+      ) {
+        clear();
+        return;
+      }
+
+      setSyncError(err instanceof ApiError ? err.message : "No se pudo sincronizar la sala");
+    } finally {
+      setSyncingCard(false);
+    }
+  };
 
   useEffect(() => {
     if (card?.markedCount === CARD_CELL_COUNT) {
@@ -309,10 +358,38 @@ function GameScreen() {
     }
   }, [card?.markedCount]);
 
+  useEffect(() => {
+    if (!card) {
+      void refreshRoom();
+    }
+  }, [snapshot.room.id]);
+
   if (!card) {
     return (
       <Screen>
-        <AppBar title="Preparando cartón" subtitle="Sincronizando con la sala" />
+        <AppBar
+          title="Preparando carton"
+          subtitle={connected ? "Sincronizando con la sala" : "Reconectando con la sala"}
+          right={<Badge label={connected ? "WS activo" : "Sin conexion"} tone={connected ? "green" : "orange"} />}
+        />
+        <Panel>
+          <Text style={styles.centerMuted}>
+            Estamos intentando recuperar tu carton. Si tarda demasiado, puedes volver a sincronizar o salir de la sala.
+          </Text>
+          {syncError ? <Text style={styles.errorText}>{syncError}</Text> : null}
+          {leaveError ? <Text style={styles.errorText}>{leaveError}</Text> : null}
+          <Button
+            label="Reintentar sincronizacion"
+            onPress={() => void refreshRoom()}
+            loading={syncingCard}
+          />
+          <Button
+            label="Salir de la sala"
+            onPress={() => void handleLeaveRoom()}
+            variant="secondary"
+            loading={leaving}
+          />
+        </Panel>
       </Screen>
     );
   }
@@ -350,28 +427,7 @@ function GameScreen() {
             label="Salir de la sala"
             variant="danger"
             loading={leaving}
-            onPress={async () => {
-              try {
-                setLeaveError(undefined);
-                setLeaving(true);
-                await leaveRoom(snapshot.room.id, token);
-                clear();
-              } catch (err) {
-                if (
-                  err instanceof ApiError &&
-                  (err.code === "ROOM_NOT_FOUND" || err.code === "UNAUTHORIZED")
-                ) {
-                  clear();
-                  return;
-                }
-
-                setLeaveError(
-                  err instanceof ApiError ? err.message : "No se pudo salir de la sala"
-                );
-              } finally {
-                setLeaving(false);
-              }
-            }}
+            onPress={() => void handleLeaveRoom()}
           />
         </Panel>
       </ScrollView>
