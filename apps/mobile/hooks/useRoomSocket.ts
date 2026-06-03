@@ -1,6 +1,6 @@
 import type { ClientGameEvent, GameEvent } from "@musical-bingo/shared";
 import { useEffect, useRef, useState } from "react";
-import { getRoomById } from "@/lib/api";
+import { ApiError, getRoomById } from "@/lib/api";
 import { WS_BASE_URL } from "@/lib/constants";
 import { useSessionStore } from "@/store/sessionStore";
 
@@ -9,6 +9,7 @@ export function useRoomSocket() {
   const snapshot = useSessionStore((state) => state.snapshot);
   const setSnapshot = useSessionStore((state) => state.setSnapshot);
   const updateCurrentCard = useSessionStore((state) => state.updateCurrentCard);
+  const clear = useSessionStore((state) => state.clear);
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -21,15 +22,28 @@ export function useRoomSocket() {
     const socket = new WebSocket(`${WS_BASE_URL}/ws?roomId=${snapshot.room.id}&token=${token}`);
     socketRef.current = socket;
 
+    const refreshSnapshot = () => {
+      getRoomById(snapshot.room.id, token)
+        .then(setSnapshot)
+        .catch((error) => {
+          if (
+            error instanceof ApiError &&
+            (error.code === "ROOM_NOT_FOUND" || error.code === "UNAUTHORIZED")
+          ) {
+            clear();
+          }
+        });
+    };
+
     socket.onopen = () => {
       setConnected(true);
-      getRoomById(snapshot.room.id, token).then(setSnapshot).catch(() => undefined);
+      refreshSnapshot();
     };
     socket.onclose = () => {
       setConnected(false);
       if (!closedByEffect) {
         setTimeout(() => {
-          getRoomById(snapshot.room.id, token).then(setSnapshot).catch(() => undefined);
+          refreshSnapshot();
         }, 1200);
       }
     };
@@ -47,7 +61,7 @@ export function useRoomSocket() {
         message.type === "bingo_confirmed" ||
         message.type === "game_reset"
       ) {
-        getRoomById(snapshot.room.id, token).then(setSnapshot).catch(() => undefined);
+        refreshSnapshot();
       }
     };
 
@@ -55,7 +69,7 @@ export function useRoomSocket() {
       closedByEffect = true;
       socket.close();
     };
-  }, [snapshot?.room.id, token, setSnapshot, updateCurrentCard]);
+  }, [snapshot?.room.id, token, clear, setSnapshot, updateCurrentCard]);
 
   const send = (event: ClientGameEvent) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {

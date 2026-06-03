@@ -319,43 +319,62 @@ function GameScreen() {
 
   return (
     <Screen>
-      <AppBar
-        title="Bingo Musical"
-        right={<Badge label={`${card.markedCount}/${CARD_CELL_COUNT}`} tone={card.markedCount === CARD_CELL_COUNT ? "green" : "neutral"} />}
-      />
-      <BingoCard
-        card={card}
-        style={{ flex: 1 }}
-        onToggle={(row, col, marked) => send({ type: marked ? "mark_cell" : "unmark_cell", row, col })}
-      />
-      <Panel>
-        <View style={styles.panelTitleRow}>
-          <View style={styles.inlineTitle}>
-            <Users color={colors.ink} size={20} />
-            <Text style={styles.panelTitle}>Jugadores</Text>
-          </View>
-          <Badge label={`${snapshot.players.length} jugadores`} />
-        </View>
-        <PlayerList players={snapshot.players} />
-        {leaveError ? <Text style={styles.errorText}>{leaveError}</Text> : null}
-        <Button
-          label="Salir de la sala"
-          variant="danger"
-          loading={leaving}
-          onPress={async () => {
-            try {
-              setLeaveError(undefined);
-              setLeaving(true);
-              await leaveRoom(snapshot.room.id, token);
-              clear();
-            } catch (err) {
-              setLeaveError(err instanceof ApiError ? err.message : "No se pudo salir de la sala");
-            } finally {
-              setLeaving(false);
-            }
-          }}
+      <ScrollView
+        contentContainerStyle={styles.gameScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <AppBar
+          title="Bingo Musical"
+          right={<Badge label={`${card.markedCount}/${CARD_CELL_COUNT}`} tone={card.markedCount === CARD_CELL_COUNT ? "green" : "neutral"} />}
         />
-      </Panel>
+        <View style={styles.gameCardWrap}>
+          <BingoCard
+            card={card}
+            style={styles.gameCard}
+            onToggle={(row, col, marked) =>
+              send({ type: marked ? "mark_cell" : "unmark_cell", row, col })
+            }
+          />
+        </View>
+        <Panel>
+          <View style={styles.panelTitleRow}>
+            <View style={styles.inlineTitle}>
+              <Users color={colors.ink} size={20} />
+              <Text style={styles.panelTitle}>Jugadores</Text>
+            </View>
+            <Badge label={`${snapshot.players.length} jugadores`} />
+          </View>
+          <PlayerList players={snapshot.players} />
+          {leaveError ? <Text style={styles.errorText}>{leaveError}</Text> : null}
+          <Button
+            label="Salir de la sala"
+            variant="danger"
+            loading={leaving}
+            onPress={async () => {
+              try {
+                setLeaveError(undefined);
+                setLeaving(true);
+                await leaveRoom(snapshot.room.id, token);
+                clear();
+              } catch (err) {
+                if (
+                  err instanceof ApiError &&
+                  (err.code === "ROOM_NOT_FOUND" || err.code === "UNAUTHORIZED")
+                ) {
+                  clear();
+                  return;
+                }
+
+                setLeaveError(
+                  err instanceof ApiError ? err.message : "No se pudo salir de la sala"
+                );
+              } finally {
+                setLeaving(false);
+              }
+            }}
+          />
+        </Panel>
+      </ScrollView>
       <BingoConfirmModal
         visible={showBingo}
         onConfirm={() => {
@@ -448,6 +467,20 @@ const styles = StyleSheet.create({
   stack: {
     gap: 10,
     paddingBottom: 12
+  },
+  gameScrollContent: {
+    gap: 16,
+    paddingBottom: 24
+  },
+  gameCardWrap: {
+    width: "100%",
+    alignItems: "center"
+  },
+  gameCard: {
+    width: "100%",
+    maxWidth: 460,
+    aspectRatio: 0.5,
+    alignSelf: "center"
   },
   errorText: {
     color: "#b93b2e",
