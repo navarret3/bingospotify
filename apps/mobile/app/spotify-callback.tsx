@@ -1,7 +1,9 @@
 import { router, useLocalSearchParams } from "expo-router";
+import Head from "expo-router/head";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import { AppBar, Button, Panel, Screen } from "@/components/ui";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { completeSpotifyLogin } from "@/lib/spotifyAuth";
 
 export default function SpotifyCallbackScreen() {
@@ -25,6 +27,22 @@ export default function SpotifyCallbackScreen() {
 
   return (
     <Screen>
+      <Head>
+        <title>Conectando Spotify - {SITE_NAME}</title>
+        <meta
+          name="description"
+          content="Pantalla de retorno para completar la conexión con Spotify antes de crear una partida."
+        />
+        <meta name="robots" content="noindex, nofollow" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content={SITE_NAME} />
+        <meta property="og:title" content={`Conectando Spotify - ${SITE_NAME}`} />
+        <meta
+          property="og:description"
+          content="Pantalla de retorno para completar la conexión con Spotify antes de crear una partida."
+        />
+        <meta property="og:image" content={`${SITE_URL}/og-image.svg`} />
+      </Head>
       <AppBar title="Conectando Spotify" subtitle="Preparando tus playlists" />
       <Panel>
         {error ? (

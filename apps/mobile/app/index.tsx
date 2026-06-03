@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import Head from "expo-router/head";
 import { Link2, Music2, Users } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
@@ -9,6 +10,7 @@ import { PlayerList } from "@/components/PlayerList";
 import { AppBar, Badge, Button, colors, Field, Panel, Screen } from "@/components/ui";
 import { useRoomSocket } from "@/hooks/useRoomSocket";
 import { ApiError, createRoom, leaveRoom, resetRoom, startRoom } from "@/lib/api";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 import { useSessionStore } from "@/store/sessionStore";
 import { CARD_CELL_COUNT } from "@musical-bingo/shared";
@@ -27,18 +29,93 @@ export default function Home() {
   }, [params.create]);
 
   if (snapshot?.room.status === "lobby") {
-    return <LobbyScreen />;
+    return (
+      <>
+        <PageHead
+          title={`Lobby ${snapshot.room.code} - ${SITE_NAME}`}
+          description="Comparte el código con tu grupo y espera a que todos entren antes de empezar el bingo musical."
+          noIndex
+        />
+        <LobbyScreen />
+      </>
+    );
   }
   if (snapshot?.room.status === "playing") {
-    return <GameScreen />;
+    return (
+      <>
+        <PageHead
+          title={`Partida en curso - ${SITE_NAME}`}
+          description="Marca canciones en tu cartón mientras suena la playlist y avisa cuando completes bingo musical."
+          noIndex
+        />
+        <GameScreen />
+      </>
+    );
   }
   if (snapshot?.room.status === "finished") {
-    return <ResultsScreen />;
+    return (
+      <>
+        <PageHead
+          title={`Resultados - ${SITE_NAME}`}
+          description="Consulta quién ganó la partida y revisa el cartón final del bingo musical."
+          noIndex
+        />
+        <ResultsScreen />
+      </>
+    );
   }
   if (mode === "create") {
-    return <CreateRoomScreen onBack={() => setMode("home")} />;
+    return (
+      <>
+        <PageHead
+          title={`Crear partida - ${SITE_NAME}`}
+          description="Crea una sala nueva de bingo musical pegando una playlist pública de Spotify."
+          noIndex
+        />
+        <CreateRoomScreen onBack={() => setMode("home")} />
+      </>
+    );
   }
-  return <HomeScreen onCreate={() => setMode("create")} />;
+  return (
+    <>
+      <PageHead title={`${SITE_NAME} | bingo con Spotify`} description={SITE_DESCRIPTION} />
+      <HomeScreen onCreate={() => setMode("create")} />
+    </>
+  );
+}
+
+function PageHead({
+  title,
+  description,
+  noIndex = false
+}: {
+  title: string;
+  description: string;
+  noIndex?: boolean;
+}) {
+  const canonicalUrl = SITE_URL;
+
+  return (
+    <Head>
+      <title>{title}</title>
+      <meta name="description" content={description} />
+      <meta
+        name="robots"
+        content={noIndex ? "noindex, nofollow" : "index, follow"}
+      />
+      {!noIndex ? <link rel="canonical" href={canonicalUrl} /> : null}
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content={SITE_NAME} />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      {!noIndex ? <meta property="og:url" content={canonicalUrl} /> : null}
+      <meta property="og:image" content={`${SITE_URL}/og-image.svg`} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={`${SITE_URL}/og-image.svg`} />
+    </Head>
+  );
 }
 
 function HomeScreen({ onCreate }: { onCreate: () => void }) {

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /join/
+Disallow: /spotify-callback
+
+Sitemap: https://bingospotify.vercel.app/sitemap.xml

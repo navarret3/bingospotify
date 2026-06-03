@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Bingo Musical</title>
+  <desc id="desc">Cartel promocional con una playlist de Spotify y un cartón de bingo</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#17072f" />
+      <stop offset="55%" stop-color="#2e115a" />
+      <stop offset="100%" stop-color="#ff8c42" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <circle cx="980" cy="160" r="180" fill="#fff7d6" opacity="0.08" />
+  <circle cx="1120" cy="490" r="120" fill="#fff7d6" opacity="0.08" />
+  <rect x="84" y="90" width="500" height="450" rx="36" fill="#fff7d6" opacity="0.96" />
+  <rect x="140" y="144" width="388" height="30" rx="15" fill="#17072f" opacity="0.12" />
+  <rect x="140" y="202" width="388" height="22" rx="11" fill="#17072f" opacity="0.08" />
+  <rect x="140" y="244" width="388" height="22" rx="11" fill="#17072f" opacity="0.08" />
+  <rect x="140" y="286" width="388" height="22" rx="11" fill="#17072f" opacity="0.08" />
+  <rect x="140" y="328" width="388" height="22" rx="11" fill="#17072f" opacity="0.08" />
+  <rect x="140" y="370" width="388" height="22" rx="11" fill="#17072f" opacity="0.08" />
+  <rect x="140" y="412" width="388" height="22" rx="11" fill="#17072f" opacity="0.08" />
+  <path d="M790 138v214.4a60 60 0 1 1-28-51V215.2l130-22v-44.4l-102 14z" fill="#fff7d6" />
+  <text x="646" y="472" fill="#fff7d6" font-family="Arial, sans-serif" font-size="84" font-weight="700">Bingo Musical</text>
+  <text x="648" y="528" fill="#fff7d6" font-family="Arial, sans-serif" font-size="28" opacity="0.92">Crea salas, comparte el código y juega con Spotify</text>
+</svg>

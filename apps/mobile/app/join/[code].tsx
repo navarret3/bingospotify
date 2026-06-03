@@ -1,8 +1,10 @@
 import { normalizeRoomCode } from "@musical-bingo/shared";
 import { router, useLocalSearchParams } from "expo-router";
+import Head from "expo-router/head";
 import { useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import { AppBar, Button, Field, Panel, Screen } from "@/components/ui";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { ApiError, joinRoom } from "@/lib/api";
 import { useSessionStore } from "@/store/sessionStore";
 
@@ -30,6 +32,22 @@ export default function JoinRoomScreen() {
 
   return (
     <Screen>
+      <Head>
+        <title>Unirse a una sala - {SITE_NAME}</title>
+        <meta
+          name="description"
+          content="Únete a una sala de bingo musical con el código que te ha compartido el anfitrión."
+        />
+        <meta name="robots" content="noindex, nofollow" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content={SITE_NAME} />
+        <meta property="og:title" content={`Unirse a una sala - ${SITE_NAME}`} />
+        <meta
+          property="og:description"
+          content="Únete a una sala de bingo musical con el código que te ha compartido el anfitrión."
+        />
+        <meta property="og:image" content={`${SITE_URL}/og-image.svg`} />
+      </Head>
       <AppBar title="Elige tu nombre" subtitle={`Sala ${code}`} />
       <Panel>
         <Field

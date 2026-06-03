@@ -1,0 +1,18 @@
+{
+  "name": "Bingo Musical",
+  "short_name": "Bingo",
+  "description": "Crea un bingo musical con Spotify y juega desde el móvil.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#17072f",
+  "theme_color": "#17072f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
