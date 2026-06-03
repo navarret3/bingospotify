@@ -218,7 +218,7 @@ function LobbyScreen() {
 
 function GameScreen() {
   const snapshot = useSessionStore((state) => state.snapshot)!;
-  const { send, connected } = useRoomSocket();
+  const { send } = useRoomSocket();
   const [showBingo, setShowBingo] = useState(false);
   const card = snapshot.currentPlayer?.card;
 
@@ -239,23 +239,14 @@ function GameScreen() {
   return (
     <Screen>
       <AppBar
-        title={snapshot.room.playlistName}
-        subtitle={snapshot.currentPlayer?.name}
+        title="Bingo Musical"
         right={<Badge label={`${card.markedCount}/${CARD_CELL_COUNT}`} tone={card.markedCount === CARD_CELL_COUNT ? "green" : "neutral"} />}
       />
-      <View style={styles.connectionLine}>
-        <Badge label={connected ? "Conectado" : "Sin conexión, reconectando"} tone={connected ? "green" : "orange"} />
-      </View>
       <BingoCard
         card={card}
         style={{ flex: 1 }}
         onToggle={(row, col, marked) => send({ type: marked ? "mark_cell" : "unmark_cell", row, col })}
       />
-      <Panel compact>
-        <Text style={styles.centerMuted}>
-          El host reproduce Spotify fuera de la app. Marca cada canción cuando la escuches.
-        </Text>
-      </Panel>
       <BingoConfirmModal
         visible={showBingo}
         onConfirm={() => {
